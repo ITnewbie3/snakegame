@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        *{margin: 0; padding: 0; box-sizing: border-box;}
+        body{width:100%;
+        height:100vh; margin:0 auto;
+        background: url('./img/jung.jpg') center center/cover no-repeat;
+        position:relative;
+            }
+        #wrap{width:80%;
+        height:100%;
+        padding-top: 170px;
+        margin: 0 auto; text-align: center;}
+        #wrap h1{
+            color:dodgerblue;
+            font-size: 90px;
+        }
+        #wrap span{
+            color:dodgerblue;
+            font-size: 60px;
+        }
+        p{
+            color:dodgerblue;
+            font-size:40px;
+        }
+        canvas{
+            background: black;
+        }
+        .back{
+            width:100vw;
+            height:100vh;
+            position: absolute;
+            top:0; left:0; right:0; bottom:0;
+            background: rgba(0,0,0,0.7);
+            opacity: 0;
+        }
+        .blak{
+            opacity: 1;
+        }
+        button{
+            font-size: 120px;
+            color:white;
+            background: none;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            left:50%; top:50%;
+            transform: translate(-50%, -50%);
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="back"> <button onclick="reset()">Restart??</button></div>
+    <div id ="wrap">
+        <h1>Snake Game</h1>
+    <canvas width="400" height="400"></canvas>
+        <br/><span>현재 뱀의 길이 : 5</span>
+        <br/> <p>먹은 사과 개수 : 0</p>
+    </div>
+    <script>
+        let canvas = document.querySelector('canvas');
+        let ctx = canvas.getContext('2d');
+        let img_topt = new Image();
+        let img_topr = new Image();
+        let img_topl = new Image();
+        let img_topb = new Image();
+        let imgTopArr = ['./img/headt.png','./img/headr.png','./img/headl.png','./img/headb.png'];
+        img_topt.src = imgTopArr[0];
+        img_topr.src = imgTopArr[1];
+        img_topl.src = imgTopArr[2];
+        img_topb.src = imgTopArr[3];
+        let img_bodyx = new Image();
+        img_bodyx.src = './img/bodyx.png'
+        let img_bodyy = new Image();
+        img_bodyy.src = './img/bodyy.png'
+        let img_footerx = new Image();
+        img_footerx.src = './img/footerx.png'
+        let img_footery = new Image();
+        img_footery.src = './img/footery.png'
+        let img_apple = new Image();
+        img_apple.src = 'img/apple.png'
+        let leng = document.querySelector('span');
+        let applep = document.querySelector('p');
+        let appletn = 0;
+        let blak = document.querySelector('.back')
+
+        window.onload = () => {
+            document.addEventListener("keydown", keyPush)
+
+            // 게임 시작시 초당 15fps로 game 함수 호출
+            animation = setInterval(snakegame, 1000 / 15)
+        }
+        // 자신의 몸에 부딪힌경우에 사용할 변수
+         let temp = true;
+        let animation;
+
+        // 양쪽방향 버튼으로 바로 이동 불가능을 위한 변수
+        let left;
+        let up
+        // 뱀위치
+        let snakeX=10, snakeY=10;
+
+        // 뱀 저장 배열
+        const snake = [];
+        
+        // 현재 뱀 길이
+        let snakeleng = 5;
+        
+        // 이동을 위한 변수
+        let moveX=0, moveY=0;
+
+        // 사과 생성을 위한 변수
+        let appleX=15, appleY=15;
+
+        // 캔버스 크기변경을 위한 변수
+        let canvasX = 20, canvasY =20
+
+        function reset() {
+        // 자신의 몸에 부딪힌경우에 사용할 변수
+        temp = true;
+        
+        // 뱀위치
+        snakeX=10;
+        snakeY=10;
+
+        
+        
+        // 현재 뱀 길이
+        snakeleng = 5;
+        
+        // 이동을 위한 변수
+        moveX=0; 
+        moveY=0;
+
+        // 사과 생성을 위한 변수
+        appleX=15;
+        appleY=15;
+        ctx.fillStyle = 'black'
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+     
+        blak.classList.remove('blak');
+        for(let i = 0; i < snake.length; i++) {
+
+        // snakeleng 배열만큼 그림
+        if(i == 0 ){
+            if(moveY == 0){
+            ctx.drawImage(img_footerx,snake[i].x*canvasX,snake[i].y*canvasY,canvasX-2,canvasY-2)
+        }else { ctx.drawImage(img_footery,snake[i].x*canvasX,snake[i].y*canvasY,canvasX-2,canvasY-2)}
+        }else if(i==snake.length-1 ){
+            if(moveY == -1){
+            ctx.drawImage(img_topt,snake[i].x*canvasX,snake[i].y*canvasY,canvasX-2,canvasY-2)
+        } else if (moveY == 1){
+            ctx.drawImage(img_topb,snake[i].x*canvasX,snake[i].y*canvasY,canvasX-2,canvasY-2)
+        } else if (moveX == 1){
+            ctx.drawImage(img_topr,snake[i].x*canvasX,snake[i].y*canvasY,canvasX-2,canvasY-2)
+        } else {      ctx.drawImage(img_topl,snake[i].x*20,snake[i].y*canvasY,canvasX-2,canvasY-2)}
+        } else if(moveX == 0){
+            ctx.drawImage(img_bodyy,snake[i].x*canvasX,snake[i].y*canvasY,canvasX-2,canvasY-2)
+        } else{
+            ctx.drawImage(img_bodyx,snake[i].x*canvasX,snake[i].y*canvasY,canvasX-2,canvasY-2)
+        }
+    }   
+    ctx.drawImage(img_apple,appleX*canvasX,appleY*canvasY,canvasX-2,canvasY-2)
+
+     
+      
+
+         blak.addEventListener("click", function(){
+            
+            location.reload();
+        })
+
+            // 게임 재시작
+
+        }
+      
+        
+
+        function snakegame(){
+     
+            
+         leng.innerHTML=`현재 뱀의 길이 :${snakeleng}`
+         ctx.fillStyle = 'black'
+         ctx.fillRect(0, 0, 20*canvasX, 20*canvasY)
+        
+        // 이동 방법(방향키 입력에따라 이동 방식 변경)
+        snakeX += moveX
+        snakeY += moveY
+
+           // 뱀 머리가 경계에 있을 떄 처리
+           // 역방향 이동불가능을 위해 변수를 하나 더 생성해서 벽에 닿을때 함께 변경해 정확도 상승.
+           if (snakeX < 0) {
+            if(snakeY < canvasY/2){
+                snakeX = 0;
+                moveX = 0;
+                moveY = 1;
+                up = false;
+            }else{
+                snakeX = 0;
+                moveX = 0;
+                moveY = -1;
+                up = true;
+            }}
+            if (snakeX > canvasX-1) {
+                if(snakeY < canvasY/2){
+                snakeX = canvasX-1;
+                moveX = 0;
+                moveY = 1;
+                up = false;
+
+            }else{
+                snakeX = canvasX-1;
+                moveX = 0;
+                moveY = -1;
+                up = true;
+            }}
+            if (snakeY < 0) {
+                if(snakeX < canvasX/2){
+                snakeY = 0;
+                moveX = 1;
+                moveY = 0;
+                left = false
+            }else{
+                snakeY = 0;
+                moveX = -1;
+                moveY = 0;
+                left = true
+            }}
+            if (snakeY > canvasY-1) {
+                if(snakeX < canvasX/2){
+                snakeY = canvasY-1;
+                moveX = 1;
+                moveY = 0;
+                left = false
+            }else{
+                snakeY = canvasY-1;
+                moveX = -1;
+                moveY = 0;
+                left = true
+            }}
+        // 초기화
+
+    
+     console.log(snakeX)
+        ctx.drawImage(img_apple,appleX*canvasX,appleY*canvasY,canvasX-2,canvasY-2)
+        // 사과를 먹은경우 사과값이 15기에 20*20 밑의값으로 랜덤하게 넣어준다.
+        // 랜덤한 값을 설정 후 뱀의 x와 y값과 비교해서 해당위치에 있으면 새롭게 값을 넣어준다.
+        if(appleX === snakeX && appleY === snakeY) {
+            snakeleng += 2;    
+            appletn += 1;
+            applep.innerHTML =`먹은 사과 개수 : ${appletn}` 
+            applecheck();
+            
+            for(let i = 0; i<snake.length; i++){
+                if(appleX == snake[i].x && appleY == snake[i].y){
+                    applecheck();
+                }else{
+                  // 사과 그리기
+                 ctx.drawImage(img_apple,appleX*canvasX,appleY*canvasY,canvasX-2,canvasY-2)
+                 temp = false
+                }
+            }
+            }
+            // 아쉬운점.. 잠깐잠깐 뱀몸에 사과가 보임. 더빠르게수정하는방법? 위로올리면되나 .. 위로 올리니 아아주 잠깐보임
+        // 뱀 그리기
+        for(let i = 0; i < snake.length; i++) {
+        // snakeleng 배열만큼 그림
+        if(i == 0 ){
+            if(moveY == 0){
+            ctx.drawImage(img_footerx,snake[i].x*canvasX,snake[i].y*canvasY,18,18)
+        }else { ctx.drawImage(img_footery,snake[i].x*canvasX,snake[i].y*canvasY,18,18)}
+        }else if(i==snake.length-1 ){
+            if(moveY == -1){
+            ctx.drawImage(img_topt,snake[i].x*canvasX,snake[i].y*canvasY,18,18)
+        } else if (moveY == 1){
+            ctx.drawImage(img_topb,snake[i].x*canvasX,snake[i].y*canvasY,18,18)
+        } else if (moveX == 1){
+            ctx.drawImage(img_topr,snake[i].x*canvasX,snake[i].y*canvasY,18,18)
+        } else {      ctx.drawImage(img_topl,snake[i].x*20,snake[i].y*canvasY,18,18)}
+        } else if(moveX == 0){
+            ctx.drawImage(img_bodyy,snake[i].x*canvasX,snake[i].y*canvasY,18,18)
+        } else{
+            ctx.drawImage(img_bodyx,snake[i].x*canvasX,snake[i].y*canvasY,18,18)
+        }
+    }   
+        //게임 진행시마다 계속 삽입해서 하나씩 늘리기
+        snake.push({
+                x: snakeX, 
+                y: snakeY
+            })
+    
+        
+        // 뱀이 자신의 몸에 부딪힐 시 종료
+        if(!temp){
+        for(let i=3; i<snake.length; i++){
+            if(snake[0].x == snake[i].x && snake[0].y == snake[i].y){
+                console.log('부딪힘')
+                blak.classList.add('blak');
+                clearInterval(animation);
+                
+            }
+        }}
+        
+        // 최대길이를 초과하면 하나를 지운다.
+        while(snake.length > snakeleng){
+            snake.shift();
+        }
+
+          
+        }
+        // 사과 함수 ... 안넣어도 될거같은데?
+        function applecheck(){
+                appleX = Math.floor(Math.random() * canvasX)
+                appleY = Math.floor(Math.random() * canvasY)
+        }
+        // left = 37 
+        // up = 38
+        // right = 39 
+        // down = 40
+        function keyPush(evt) {
+            // 수직, 수평으로 제자리에서 이동 불가능 ..하게해야하는데 꾹누르면 되버림..ㅠ
+            // 벽에있을때 해당방향 입력키 입력 불가능 if(snakeX == 0)
+            switch (evt.keyCode) {
+                case 37:
+                    if(moveX ==1 && !left){
+                        break;
+                    }else if(snakeX == 0) {
+                        break;
+                    } else {
+                    moveX = -1;
+                    moveY = 0;
+                    left = true;
+                    break;}
+                case 38:
+                if(moveY == 1 && !up){
+                        break;
+                    }else if(snakeY ==0){
+                     break;}
+                    else {moveX = 0;
+                    moveY = -1;
+                    up = true;
+                    break;}
+                case 39:
+                if(moveX == -1 && left){
+                        break;
+                    }else if(snakeX==canvasX-1){
+                     break;   
+                    }
+                    else {
+                    moveX = 1;
+                    moveY = 0;
+                    left = false;
+                     break;}
+                case 40:
+                if(moveY == -1 && up){
+                        break;
+                    }else if (snakeY == canvasY-1){
+                        break;
+                    } else  {
+                    moveX = 0;
+                    moveY = 1;
+                    up = false;
+                    break;}
+            }
+        }
+    </script>
+</body>
+</html>
